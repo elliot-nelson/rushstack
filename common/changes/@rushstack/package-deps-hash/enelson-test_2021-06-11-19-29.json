@@ -1,0 +1,11 @@
+{
+  "changes": [
+    {
+      "packageName": "@rushstack/package-deps-hash",
+      "comment": "adf oasdf",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@rushstack/package-deps-hash",
+  "email": "elliot-nelson@users.noreply.github.com"
+}
