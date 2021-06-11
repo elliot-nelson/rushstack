@@ -1,4 +1,4 @@
-# @rushstack/package-deps-hash
+xxx# @rushstack/package-deps-hash
 
 The `package-deps-hash` library generates a JSON object containing the git hashes of all files used to produce
 a given package.  This is useful for scenarios where you want to define a "change receipt" file to be published
