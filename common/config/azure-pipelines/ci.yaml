@@ -1,3 +1,11 @@
+################################################################################
+# Name:   rushstack CI Build
+# Folder: \rushstack
+# URL:    https://dev.azure.com/RushStack/c1d16647-08b1-42a4-bcd8-2e38815e1f14/_build/definition?definitionId=3
+#
+# (See common/config/azure-pipelines/README.md for more information.)
+# Schema: https://docs.microsoft.com/en-us/azure/devops/pipelines/yaml-schema
+################################################################################
 pool:
   vmImage: 'ubuntu-latest'
 variables:

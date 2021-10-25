@@ -1,3 +1,11 @@
+################################################################################
+# This is a reusable YAML template, referenced by other files:
+#   ./npm-publish-rush.yaml
+#   ./npm-publish.yaml
+#
+# (See common/config/azure-pipelines/README.md for more information.)
+# Schema: https://docs.microsoft.com/en-us/azure/devops/pipelines/yaml-schema
+################################################################################
 parameters:
   - name: VersionPolicyName
     type: string

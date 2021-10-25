@@ -1,3 +1,12 @@
+################################################################################
+# This is a reusable YAML template, referenced by other files:
+#   ./ci.yaml
+#   ./npm-publish-rush.yaml
+#   ./npm-publish.yaml
+#
+# (See common/config/azure-pipelines/README.md for more information.)
+# Schema: https://docs.microsoft.com/en-us/azure/devops/pipelines/yaml-schema
+################################################################################
 steps:
   - task: NodeTool@0
     displayName: 'Use Node $(NodeVersion).x'
