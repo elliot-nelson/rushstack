@@ -197,8 +197,17 @@ export abstract class BaseInstallManager {
     // Always perform a clean install if filter flags were provided. Additionally, if
     // "--purge" was specified, or if the last install was interrupted, then we will
     // need to perform a clean install.  Otherwise, we can do an incremental install.
-    const cleanInstall: boolean =
+    let cleanInstall: boolean =
       isFilteredInstall || !this._commonTempInstallFlag.checkValidAndReportStoreIssues();
+
+    // NPM
+    //
+    // The only way to force NPM to install a new tarball is to delete BOTH the node_modules
+    // folder AND the shrinkwrap file. We have deleted the shrinkwrap up in prepareAsync
+    // in this case, so we also need to set the cleanInstall flag.
+    if (this.rushConfiguration.packageManager === 'npm' && !shrinkwrapIsUpToDate) {
+      cleanInstall = true;
+    }
 
     // Allow us to defer the file read until we need it
     const canSkipInstall: () => boolean = () => {

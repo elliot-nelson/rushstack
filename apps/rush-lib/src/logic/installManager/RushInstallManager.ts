@@ -286,15 +286,6 @@ export class RushInstallManager extends BaseInstallManager {
         // ignore the error, we will go ahead and create a new tarball
       }
 
-      // NPM:
-      //
-      // If the shrinkwrap file is not up to date, force update the temp package tarballs.
-      // We are discarding the checked-in shrinkwrap and updating the package tarballs ensures
-      // we won't run into a situation where they have an incorrect hash value.
-      if (this.rushConfiguration.packageManager === 'npm' && !shrinkwrapIsUpToDate) {
-        shouldOverwrite = true;
-      }
-
       if (shouldOverwrite) {
         try {
           // ensure the folder we are about to zip exists
