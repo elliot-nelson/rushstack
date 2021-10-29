@@ -438,6 +438,14 @@ export abstract class BaseInstallManager {
     let { shrinkwrapIsUpToDate, shrinkwrapWarnings } = await this.prepareCommonTempAsync(shrinkwrapFile);
     shrinkwrapIsUpToDate = shrinkwrapIsUpToDate && !this.options.recheckShrinkwrap;
 
+    // NPM:
+    //
+    // If the shrinkwrap file is not up to date, discard the checked-in shrinkwrap file,
+    // because NPM is not able to tell whether the target filesystem tarball has changed.
+    if (this.rushConfiguration.packageManager === 'npm' && !shrinkwrapIsUpToDate) {
+      shrinkwrapFile = undefined;
+    }
+
     this._syncTempShrinkwrap(shrinkwrapFile);
 
     // Write out the reported warnings
