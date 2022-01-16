@@ -20,6 +20,8 @@ import { ITaskRunnerContext } from './BaseTaskRunner';
 import { CommandLineConfiguration } from '../../api/CommandLineConfiguration';
 import { TaskError } from './TaskError';
 
+import { createClient, RedisClientType, RedisModules, RedisScripts } from 'redis';
+
 export interface ITaskExecutionManagerOptions {
   quietMode: boolean;
   debugMode: boolean;
@@ -60,6 +62,8 @@ export class TaskExecutionManager {
 
   private _terminal: CollatedTerminal;
 
+  private _redis: RedisClientType<RedisModules, RedisScripts>;
+
   public constructor(orderedTasks: Task[], options: ITaskExecutionManagerOptions) {
     const { quietMode, debugMode, parallelism, changedProjectsOnly, repoCommandLineConfiguration } = options;
     this._tasks = orderedTasks;
@@ -70,6 +74,8 @@ export class TaskExecutionManager {
     this._hasAnyNonAllowedWarnings = false;
     this._changedProjectsOnly = changedProjectsOnly;
     this._repoCommandLineConfiguration = repoCommandLineConfiguration;
+
+    this._redis = createClient();
 
     // TERMINAL PIPELINE:
     //
@@ -118,6 +124,7 @@ export class TaskExecutionManager {
   }
 
   private _streamCollator_onWriterActive = (writer: CollatedWriter | undefined): void => {
+    createClient();
     if (writer) {
       this._completedTasks++;
 
@@ -176,6 +183,8 @@ export class TaskExecutionManager {
 
     await this._startAvailableTasksAsync();
 
+    await this._redis.quit();
+
     this._printTaskStatus();
 
     if (this._hasAnyFailures) {
@@ -191,7 +200,9 @@ export class TaskExecutionManager {
    * Pulls the next task with no dependencies off the task queue
    * Removes any non-ready tasks from the task queue (this should only be blocked tasks)
    */
-  private _getNextTask(): Task | undefined {
+  private async _getNextTask(): Promise<Task | undefined> {
+    let readyTasks: number[] = [];
+
     for (let i: number = 0; i < this._taskQueue.length; i++) {
       const task: Task = this._taskQueue[i];
 
@@ -202,10 +213,30 @@ export class TaskExecutionManager {
         i--;
       } else if (task.dependencies.size === 0 && task.status === TaskStatus.Ready) {
         // this is a task which is ready to go. remove it and return it
-        return this._taskQueue.splice(i, 1)[0];
+        readyTasks.push(i);
       }
       // Otherwise task is still waiting
     }
+
+    if (readyTasks.length < 0) return undefined;
+
+    this._terminal.writeStdoutLine(readyTasks.map(x => this._taskQueue[x].name).join(','));
+
+    this._terminal.writeStdoutLine('Waiting for a task to run...');
+    this._terminal.writeStdoutLine(`(There are ${readyTasks.length} tasks pending.)`);
+
+    if (!this._redis.isOpen) {
+      await this._redis.connect();
+    }
+
+    const result = await this._redis.blPop('incoming', 30);
+    if (result && result.element) {
+      const t: number = Number(result.element);
+      this._terminal.writeStdoutLine('Running task ' + t);
+      return this._taskQueue.splice(readyTasks[t], 1)[0];
+    }
+
+    this._terminal.writeStdoutLine('Running task nothing');
     return undefined; // There are no tasks ready to go at this time
   }
 
@@ -216,7 +247,7 @@ export class TaskExecutionManager {
   private async _startAvailableTasksAsync(): Promise<void> {
     const taskPromises: Promise<void>[] = [];
     let currentTask: Task | undefined;
-    while (this._currentActiveTasks < this._parallelism && (currentTask = this._getNextTask())) {
+    while (this._currentActiveTasks < this._parallelism && (currentTask = await this._getNextTask())) {
       this._currentActiveTasks++;
       const task: Task = currentTask;
       task.status = TaskStatus.Executing;
