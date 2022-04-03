@@ -272,6 +272,17 @@ export class ShellOperationRunner implements IOperationRunner {
         const restoreFromCacheSuccess: boolean | undefined =
           await projectBuildCache?.tryRestoreFromCacheAsync(terminal);
 
+        if (buildCacheReadAttempted) {
+          // As soon as any project in a build attempts to read from the cache, successful
+          // or not, we should prevent any projects in this build from skipping.
+          //
+          // "Skipping" (legacy incremental build) poisons the well for any future projects
+          // by disabling cache writes; if we believe there's any chance at all that downstream
+          // projects may successfully build and write to cache, we shouldn't allow legacy
+          // skip behavior.
+          this.isSkipAllowed = false;
+        }
+
         if (restoreFromCacheSuccess) {
           return OperationStatus.FromCache;
         }
