@@ -26,6 +26,12 @@ export interface IOperationExecutionManagerOptions {
   destination?: TerminalWritable;
 }
 
+type CpuRecord = {
+  clock: number;
+  step: number;
+  active: number;
+}
+
 /**
  * Format "======" lines for a shell window with classic 80 columns
  */
@@ -645,14 +651,14 @@ export class OperationExecutionManager {
     //
 
     const chartWidth: number = TIMELINE_WIDTH - longestNameLength - longestDurationLength - 3;
+
     //
     // Loop through all operations, assembling some statistics about operations and
     // phases, if applicable.
     //
 
     const durationByPhase: Map<string, number> = new Map();
-
-    const busyCpus: number[] = Array(this._parallelism).fill(-1);
+    const cpuUsageTimeline: CpuRecord[] = [];
 
     this._terminal.writeStdoutLine('='.repeat(TIMELINE_WIDTH));
 
@@ -667,11 +673,18 @@ export class OperationExecutionManager {
       }
 
       // Track busy CPUs
-      const openCpu: number = busyCpus.findIndex((end) => end === -1 || end < operation.stopwatch.startTime!);
-      busyCpus[openCpu] = operation.stopwatch.endTime!;
+      cpuUsageTimeline.push({
+        clock: operation.stopwatch.startTime!,
+        step: 1,
+        active: 0
+      });
+      cpuUsageTimeline.push({
+        clock: operation.stopwatch.endTime!,
+        step: -1,
+        active: 0
+      });
 
       // Build timeline chart
-
       const startIdx: number = Math.floor(
         ((operation.stopwatch.startTime! - allStart) * chartWidth) / allDuration
       );
@@ -695,23 +708,55 @@ export class OperationExecutionManager {
 
     this._terminal.writeStdoutLine('='.repeat(TIMELINE_WIDTH));
 
+
+    // CPU Stuff
+    let activeCpus: number = 0;
+    let averageCpus: number = 0;
+    let maxCpus: number = 0;
+    cpuUsageTimeline.sort((a, b) => a.clock - b.clock);
+    const cpuTimeline: number[] = Array(chartWidth + 1).fill(0);
+    for (let i: number = 0; i < cpuUsageTimeline.length - 1; i++) {
+      const record: CpuRecord = cpuUsageTimeline[i];
+      const length: number = cpuUsageTimeline[i + 1].clock - record.clock;
+      activeCpus += record.step;
+      record.active = activeCpus;
+
+      if (activeCpus > maxCpus) {
+        maxCpus = activeCpus;
+      }
+
+      const startIdx: number = Math.floor((record.clock - allStart) * chartWidth / allDuration);
+      const endIdx: number = Math.floor((cpuUsageTimeline[i+ 1].clock - allStart) * chartWidth / allDuration);
+      for (let idx: number = startIdx; idx <= endIdx; idx++) {
+        if (activeCpus > cpuTimeline[idx]) {
+          cpuTimeline[idx] = activeCpus;
+        }
+      }
+
+      averageCpus += activeCpus * length;
+    }
+    averageCpus = Math.ceil(averageCpus / allDuration);
+
+    this._terminal.writeStdoutLine('boog');
+    this._terminal.writeStdoutLine(''.padEnd(longestNameLength) + ' ' + cpuTimeline.join(''));
+
     //
     // Format legend and summary areas
     //
-
-    const usedCpus: number = busyCpus.filter((cpu) => cpu !== -1).length;
 
     const legend: string[] = ['LEGEND:', '  [#] Success  [!] Failed/warnings  [%] Skipped/cached'];
 
     const summary: string[] = [
       'Total Work: ' + workDuration.toFixed(1) + 's',
       'Wall Clock: ' + (allDuration / 1000).toFixed(1) + 's',
-      `Parallelism Used: ${usedCpus}/${this._parallelism}`
+      `Avg CPUs Used: ${averageCpus}/${this._parallelism}`,
+      `Max CPUs Used: ${maxCpus}/${this._parallelism}`
     ];
 
     this._terminal.writeStdoutLine(legend[0] + summary[0].padStart(TIMELINE_WIDTH - legend[0].length));
     this._terminal.writeStdoutLine(legend[1] + summary[1].padStart(TIMELINE_WIDTH - legend[1].length));
     this._terminal.writeStdoutLine(summary[2].padStart(TIMELINE_WIDTH));
+    this._terminal.writeStdoutLine(summary[3].padStart(TIMELINE_WIDTH));
 
     //
     // Include time-by-phase, if phases are enabled
