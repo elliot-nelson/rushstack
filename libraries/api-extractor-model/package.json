@@ -17,8 +17,8 @@
     "_phase:test": "heft test --no-build"
   },
   "dependencies": {
-    "@microsoft/tsdoc": "0.13.2",
-    "@microsoft/tsdoc-config": "~0.15.2",
+    "@microsoft/tsdoc": "~0.14.1",
+    "@microsoft/tsdoc-config": "~0.16.1",
     "@rushstack/node-core-library": "workspace:*"
   },
   "devDependencies": {

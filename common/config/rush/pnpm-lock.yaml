@@ -8,7 +8,7 @@ importers:
   ../../apps/api-documenter:
     specifiers:
       '@microsoft/api-extractor-model': workspace:*
-      '@microsoft/tsdoc': 0.13.2
+      '@microsoft/tsdoc': ~0.14.1
       '@rushstack/eslint-config': workspace:*
       '@rushstack/heft': workspace:*
       '@rushstack/heft-node-rig': workspace:*
@@ -23,7 +23,7 @@ importers:
       resolve: ~1.17.0
     dependencies:
       '@microsoft/api-extractor-model': link:../../libraries/api-extractor-model
-      '@microsoft/tsdoc': 0.13.2
+      '@microsoft/tsdoc': 0.14.1
       '@rushstack/node-core-library': link:../../libraries/node-core-library
       '@rushstack/ts-command-line': link:../../libraries/ts-command-line
       colors: 1.2.5
@@ -41,8 +41,8 @@ importers:
   ../../apps/api-extractor:
     specifiers:
       '@microsoft/api-extractor-model': workspace:*
-      '@microsoft/tsdoc': 0.13.2
-      '@microsoft/tsdoc-config': ~0.15.2
+      '@microsoft/tsdoc': ~0.14.1
+      '@microsoft/tsdoc-config': ~0.16.1
       '@rushstack/eslint-config': workspace:*
       '@rushstack/heft': 0.44.2
       '@rushstack/heft-node-rig': 1.7.1
@@ -62,8 +62,8 @@ importers:
       typescript: ~4.5.2
     dependencies:
       '@microsoft/api-extractor-model': link:../../libraries/api-extractor-model
-      '@microsoft/tsdoc': 0.13.2
-      '@microsoft/tsdoc-config': 0.15.2
+      '@microsoft/tsdoc': 0.14.1
+      '@microsoft/tsdoc-config': 0.16.1
       '@rushstack/node-core-library': link:../../libraries/node-core-library
       '@rushstack/rig-package': link:../../libraries/rig-package
       '@rushstack/ts-command-line': link:../../libraries/ts-command-line
@@ -1182,7 +1182,7 @@ importers:
       eslint: ~8.7.0
       eslint-plugin-promise: ~6.0.0
       eslint-plugin-react: ~7.27.1
-      eslint-plugin-tsdoc: ~0.2.14
+      eslint-plugin-tsdoc: ~0.2.16
       typescript: ~4.5.2
     dependencies:
       '@rushstack/eslint-patch': link:../eslint-patch
@@ -1195,7 +1195,7 @@ importers:
       '@typescript-eslint/typescript-estree': 5.6.0_typescript@4.5.5
       eslint-plugin-promise: 6.0.0_eslint@8.7.0
       eslint-plugin-react: 7.27.1_eslint@8.7.0
-      eslint-plugin-tsdoc: 0.2.14
+      eslint-plugin-tsdoc: 0.2.16
     devDependencies:
       eslint: 8.7.0
       typescript: 4.5.5
@@ -1476,8 +1476,8 @@ importers:
 
   ../../libraries/api-extractor-model:
     specifiers:
-      '@microsoft/tsdoc': 0.13.2
-      '@microsoft/tsdoc-config': ~0.15.2
+      '@microsoft/tsdoc': ~0.14.1
+      '@microsoft/tsdoc-config': ~0.16.1
       '@rushstack/eslint-config': workspace:*
       '@rushstack/heft': 0.44.2
       '@rushstack/heft-node-rig': 1.7.1
@@ -1485,8 +1485,8 @@ importers:
       '@types/heft-jest': 1.0.1
       '@types/node': 12.20.24
     dependencies:
-      '@microsoft/tsdoc': 0.13.2
-      '@microsoft/tsdoc-config': 0.15.2
+      '@microsoft/tsdoc': 0.14.1
+      '@microsoft/tsdoc-config': 0.16.1
       '@rushstack/node-core-library': link:../node-core-library
     devDependencies:
       '@rushstack/eslint-config': link:../../eslint/eslint-config
@@ -1897,7 +1897,7 @@ importers:
     specifiers:
       '@microsoft/api-documenter': workspace:*
       '@microsoft/api-extractor-model': workspace:*
-      '@microsoft/tsdoc': 0.13.2
+      '@microsoft/tsdoc': ~0.14.1
       '@rushstack/eslint-config': workspace:*
       '@rushstack/heft': workspace:*
       '@rushstack/heft-node-rig': workspace:*
@@ -1908,7 +1908,7 @@ importers:
     dependencies:
       '@microsoft/api-documenter': link:../../apps/api-documenter
       '@microsoft/api-extractor-model': link:../../libraries/api-extractor-model
-      '@microsoft/tsdoc': 0.13.2
+      '@microsoft/tsdoc': 0.14.1
       '@rushstack/node-core-library': link:../../libraries/node-core-library
       js-yaml: 3.13.1
     devDependencies:
@@ -5305,9 +5305,22 @@ packages:
       ajv: 6.12.6
       jju: 1.4.0
       resolve: 1.19.0
+    dev: true
+
+  /@microsoft/tsdoc-config/0.16.1:
+    resolution: {integrity: sha512-2RqkwiD4uN6MLnHFljqBlZIXlt/SaUT6cuogU1w2ARw4nKuuppSmR0+s+NC+7kXBQykd9zzu0P4HtBpZT5zBpQ==}
+    dependencies:
+      '@microsoft/tsdoc': 0.14.1
+      ajv: 6.12.6
+      jju: 1.4.0
+      resolve: 1.19.0
 
   /@microsoft/tsdoc/0.13.2:
     resolution: {integrity: sha512-WrHvO8PDL8wd8T2+zBGKrMwVL5IyzR3ryWUsl0PXgEV0QHup4mTLi0QcATefGI6Gx9Anu7vthPyyyLpY0EpiQg==}
+    dev: true
+
+  /@microsoft/tsdoc/0.14.1:
+    resolution: {integrity: sha512-6Wci+Tp3CgPt/B9B0a3J4s3yMgLNSku6w5TV6mN+61C71UqsRBv2FUibBf3tPGlNxebgPHMEUzKpb1ggE8KCKw==}
 
   /@mrmlnc/readdir-enhanced/2.2.1:
     resolution: {integrity: sha512-bPHp6Ji8b41szTOcaP63VlnbbO5Ny6dwAATtY6JTjh5N2OLrb5Qk/Th5cRkRQhkWCt+EJsYrNB0MiL+Gpn6e3g==}
@@ -5695,7 +5708,7 @@ packages:
       eslint: 7.30.0
       eslint-plugin-promise: 6.0.0_eslint@7.30.0
       eslint-plugin-react: 7.27.1_eslint@7.30.0
-      eslint-plugin-tsdoc: 0.2.14
+      eslint-plugin-tsdoc: 0.2.16
       typescript: 4.5.5
     transitivePeerDependencies:
       - supports-color
@@ -11708,11 +11721,11 @@ packages:
       string.prototype.matchall: 4.0.7
     dev: false
 
-  /eslint-plugin-tsdoc/0.2.14:
-    resolution: {integrity: sha512-fJ3fnZRsdIoBZgzkQjv8vAj6NeeOoFkTfgosj6mKsFjX70QV256sA/wq+y/R2+OL4L8E79VVaVWrPeZnKNe8Ng==}
+  /eslint-plugin-tsdoc/0.2.16:
+    resolution: {integrity: sha512-F/RWMnyDQuGlg82vQEFHQtGyWi7++XJKdYNn0ulIbyMOFqYIjoJOUdE6olORxgwgLkpJxsCJpJbTHgxJ/ggfXw==}
     dependencies:
-      '@microsoft/tsdoc': 0.13.2
-      '@microsoft/tsdoc-config': 0.15.2
+      '@microsoft/tsdoc': 0.14.1
+      '@microsoft/tsdoc-config': 0.16.1
 
   /eslint-scope/4.0.3:
     resolution: {integrity: sha512-p7VutNr1O/QrxysMo3E45FjYDTeXBy0iTltPFNSqKAIfjDSXC+4dj+qfyuD8bfAXrW/y6lW3O76VaYNPKfpKrg==}
