@@ -1,2 +1,5 @@
 # Keep temp folders in mocked 'repos' that are used for unit tests
 !**/test/**/temp
+
+# Ignore the removeRepo test folder
+src/cli/actions/test/removeRepo
