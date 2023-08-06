@@ -426,10 +426,12 @@ export class SelectionParameterSet {
         throw new AlreadyReportedError();
       }
 
+      const context: string = `parameter ${parameterName}`;
+
       for (const project of await handler.evaluateSelectorAsync({
         unscopedSelector,
         terminal,
-        parameterName
+        context
       })) {
         selection.add(project);
       }

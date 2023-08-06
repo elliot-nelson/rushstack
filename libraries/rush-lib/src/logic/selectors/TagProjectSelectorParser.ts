@@ -4,6 +4,7 @@
 import type { RushConfiguration } from '../../api/RushConfiguration';
 import type { RushConfigurationProject } from '../../api/RushConfigurationProject';
 import type { IEvaluateSelectorOptions, ISelectorParser } from './ISelectorParser';
+import { SelectorError } from './SelectorError';
 
 export class TagProjectSelectorParser implements ISelectorParser<RushConfigurationProject> {
   private readonly _rushConfiguration: RushConfiguration;
@@ -15,13 +16,13 @@ export class TagProjectSelectorParser implements ISelectorParser<RushConfigurati
   public async evaluateSelectorAsync({
     unscopedSelector,
     terminal,
-    parameterName
+    context
   }: IEvaluateSelectorOptions): Promise<Iterable<RushConfigurationProject>> {
     const selection: ReadonlySet<RushConfigurationProject> | undefined =
       this._rushConfiguration.projectsByTag.get(unscopedSelector);
     if (!selection) {
-      throw new Error(
-        `The tag "${unscopedSelector}" passed to "${parameterName}" is not specified for any projects in rush.json.`
+      throw new SelectorError(
+        `The tag "${unscopedSelector}" in ${context} is not specified for any projects in rush.json.`
       );
     }
     return selection;

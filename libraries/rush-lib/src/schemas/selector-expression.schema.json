@@ -1,0 +1,62 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "JSON Selector Expression",
+  "description": "A JSON representation of selector expressions, which can be used to select sets of projects.",
+  "definitions": {
+    "expression": {
+      "oneOf": [
+        {
+          "$ref": "#/definitions/selector"
+        },
+        {
+          "$ref": "#/definitions/filter"
+        },
+        {
+          "$ref": "#/definitions/operator"
+        }
+      ]
+    },
+    "selector": {
+      "type": "object",
+      "properties": {
+        "scope": {
+          "type": "string",
+          "description": "The name of the selector scope to apply."
+        },
+        "value": {
+          "type": "string",
+          "description": "The selector value."
+        }
+      }
+    },
+    "filter": {
+      "type": "object",
+      "properties": {
+        "filter": {
+          "type": "string",
+          "description": "The name of the filter to apply."
+        },
+        "arg": {
+          "$ref": "#/definitions/expression"
+        }
+      }
+    },
+    "operator": {
+      "type": "object",
+      "properties": {
+        "op": {
+          "type": "string",
+          "description": "The name of the operator to apply."
+        },
+        "args": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/expression"
+          }
+        }
+      }
+    }
+  },
+  "type": "object",
+  "$ref": "#/definitions/expression"
+}

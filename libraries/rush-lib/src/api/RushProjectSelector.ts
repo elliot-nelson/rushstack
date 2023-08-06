@@ -13,6 +13,7 @@ import {
 import { NamedProjectSelectorParser } from '../logic/selectors/NamedProjectSelectorParser';
 import { TagProjectSelectorParser } from '../logic/selectors/TagProjectSelectorParser';
 import { VersionPolicyProjectSelectorParser } from '../logic/selectors/VersionPolicyProjectSelectorParser';
+import { SelectorError } from '../logic/selectors/SelectorError';
 
 import { ExpressionJson, ISelectorJson, IFilterJson, IOperatorJson } from './SelectorExpressionJson';
 import { SelectorExpressionParser } from './SelectorExpressionParser';
@@ -53,7 +54,7 @@ export class RushProjectSelector {
     this._scopes.set('version-policy', new VersionPolicyProjectSelectorParser(this._rushConfig));
   }
 
-  public async selectExpression(expr: ExpressionJson): Promise<RushConfigurationProject[]> {
+  public async selectExpression(expr: ExpressionJson, context: string): Promise<RushConfigurationProject[]> {
     if (RushProjectSelector.isSelector(expr)) {
       return this._evaluateSelector(expr);
     } else if (RushProjectSelector.isFilter(expr)) {
@@ -70,7 +71,7 @@ export class RushProjectSelector {
     const allowedFilters: string[] = ['to', 'from', 'impacted-by', 'only'];
 
     const expr: ExpressionJson = SelectorExpressionParser.parse(exprString, allowedFilters);
-    return this.selectExpression(expr);
+    return this.selectExpression(expr, 'something');
   }
 
   private async _evaluateSelector(selector: ISelectorJson): Promise<RushConfigurationProject[]> {
@@ -82,7 +83,7 @@ export class RushProjectSelector {
       ...(await parser.evaluateSelectorAsync({
         unscopedSelector: selector.value,
         terminal: undefined as unknown as ITerminal,
-        parameterName: 'blah'
+        context: 'expression'
       }))
     ];
   }
