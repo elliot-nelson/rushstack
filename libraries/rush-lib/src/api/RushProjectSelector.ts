@@ -13,10 +13,10 @@ import {
 import { NamedProjectSelectorParser } from '../logic/selectors/NamedProjectSelectorParser';
 import { TagProjectSelectorParser } from '../logic/selectors/TagProjectSelectorParser';
 import { VersionPolicyProjectSelectorParser } from '../logic/selectors/VersionPolicyProjectSelectorParser';
+import { JsonFileSelectorParser } from '../logic/selectors/JsonFileSelectorParser';
 import { SelectorError } from '../logic/selectors/SelectorError';
 
 import { ExpressionJson, ISelectorJson, IFilterJson, IOperatorJson } from './SelectorExpressionJson';
-import { SelectorExpressionParser } from './SelectorExpressionParser';
 
 /**
  * When preparing to select projects in a Rush monorepo, some selector scopes
@@ -52,93 +52,99 @@ export class RushProjectSelector {
     );
     this._scopes.set('tag', new TagProjectSelectorParser(this._rushConfig));
     this._scopes.set('version-policy', new VersionPolicyProjectSelectorParser(this._rushConfig));
+    this._scopes.set('json', new JsonFileSelectorParser(this._rushConfig, this));
   }
 
+  /**
+   * Select a set of projects using the passed selector expression. The passed context string
+   * is used only when constructing error messages, in the event of an error in user input.
+   */
   public async selectExpression(expr: ExpressionJson, context: string): Promise<RushConfigurationProject[]> {
-    if (RushProjectSelector.isSelector(expr)) {
-      return this._evaluateSelector(expr);
-    } else if (RushProjectSelector.isFilter(expr)) {
-      return this._evaluateFilter(expr);
-    } else if (RushProjectSelector.isOperator(expr)) {
-      return this._evaluateOperator(expr);
+    if (RushProjectSelector._isSelector(expr)) {
+      return this._evaluateSelector(expr, context);
+    } else if (RushProjectSelector._isFilter(expr)) {
+      return this._evaluateFilter(expr, context);
+    } else if (RushProjectSelector._isOperator(expr)) {
+      return this._evaluateOperator(expr, context);
     } else {
-      throw new Error(`Unexpected object in selector expression.`);
+      // Fail-safe... in general, this shouldn't be possible, as user script type checking
+      // or JSON schema validation should catch it before this point.
+      throw new SelectorError(`Invalid object encountered in selector expression in ${context}.`);
     }
   }
 
-  public async selectExpressionString(exprString: string): Promise<RushConfigurationProject[]> {
-    // Allowed filters can be influenced by Rush plugins in the future.
-    const allowedFilters: string[] = ['to', 'from', 'impacted-by', 'only'];
-
-    const expr: ExpressionJson = SelectorExpressionParser.parse(exprString, allowedFilters);
-    return this.selectExpression(expr, 'something');
-  }
-
-  private async _evaluateSelector(selector: ISelectorJson): Promise<RushConfigurationProject[]> {
+  private async _evaluateSelector(
+    selector: ISelectorJson,
+    context: string
+  ): Promise<RushConfigurationProject[]> {
     const parser: ISelectorParser<RushConfigurationProject> | undefined = this._scopes.get(selector.scope);
     if (!parser) {
-      throw new Error(`Unknown selector scope '${selector.scope}' for value '${selector.value}'.`);
+      throw new SelectorError(
+        `Unknown selector scope '${selector.scope}' for value '${selector.value}' in ${context}.`
+      );
     }
     return [
       ...(await parser.evaluateSelectorAsync({
         unscopedSelector: selector.value,
         terminal: undefined as unknown as ITerminal,
-        context: 'expression'
+        context: context
       }))
     ];
   }
 
-  private async _evaluateFilter(expr: IFilterJson): Promise<RushConfigurationProject[]> {
+  private async _evaluateFilter(expr: IFilterJson, context: string): Promise<RushConfigurationProject[]> {
     if (expr.filter === 'to') {
-      const arg: RushConfigurationProject[] = await this.selectExpression(expr.arg);
+      const arg: RushConfigurationProject[] = await this.selectExpression(expr.arg, context);
       return [...Selection.expandAllDependencies(arg)];
     } else if (expr.filter === 'from') {
-      const arg: RushConfigurationProject[] = await this.selectExpression(expr.arg);
+      const arg: RushConfigurationProject[] = await this.selectExpression(expr.arg, context);
       return [...Selection.expandAllDependencies(Selection.expandAllConsumers(arg))];
     } else if (expr.filter === 'only') {
       // "only" is sort of a no-op in a generic selector expression
-      const arg: RushConfigurationProject[] = await this.selectExpression(expr.arg);
+      const arg: RushConfigurationProject[] = await this.selectExpression(expr.arg, context);
       return arg;
     } else {
-      throw new Error(`Unknown filter '${expr.filter}' encountered in selector expression.`);
+      throw new SelectorError(
+        `Unknown filter '${expr.filter}' encountered in selector expression in ${context}.`
+      );
     }
   }
 
-  private async _evaluateOperator(expr: IOperatorJson): Promise<RushConfigurationProject[]> {
+  private async _evaluateOperator(expr: IOperatorJson, context: string): Promise<RushConfigurationProject[]> {
     if (expr.op === 'not') {
       // Built-in operator
-      const result: RushConfigurationProject[] = await this.selectExpression(expr.args[0]);
+      const result: RushConfigurationProject[] = await this.selectExpression(expr.args[0], context);
       return this._rushConfig.projects.filter((p) => !result.includes(p));
     } else if (expr.op === 'and') {
       // Built-in operator
       return [
         ...Selection.intersection(
-          new Set(await this.selectExpression(expr.args[0])),
-          new Set(await this.selectExpression(expr.args[1]))
+          new Set(await this.selectExpression(expr.args[0], context)),
+          new Set(await this.selectExpression(expr.args[1], context))
         )
       ];
     } else if (expr.op === 'or') {
       // Built-in operator
       return [
         ...Selection.union(
-          new Set(await this.selectExpression(expr.args[0])),
-          new Set(await this.selectExpression(expr.args[1]))
+          new Set(await this.selectExpression(expr.args[0], context)),
+          new Set(await this.selectExpression(expr.args[1], context))
         )
       ];
     } else {
-      throw new Error(`Unknown operator '${expr.op}' in selector expression.`);
+      throw new SelectorError(`Unknown operator '${expr.op}' in selector expression in ${context}.`);
     }
   }
 
-  public static isSelector(expr: ExpressionJson): expr is ISelectorJson {
+  private static _isSelector(expr: ExpressionJson): expr is ISelectorJson {
     return !!(expr as ISelectorJson).scope;
   }
 
-  public static isFilter(expr: ExpressionJson): expr is IFilterJson {
+  private static _isFilter(expr: ExpressionJson): expr is IFilterJson {
     return !!(expr as IFilterJson).filter;
   }
 
-  public static isOperator(expr: ExpressionJson): expr is IOperatorJson {
+  private static _isOperator(expr: ExpressionJson): expr is IOperatorJson {
     return !!(expr as IOperatorJson).op;
   }
 }

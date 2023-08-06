@@ -20,6 +20,7 @@ import {
 import { NamedProjectSelectorParser } from '../../logic/selectors/NamedProjectSelectorParser';
 import { TagProjectSelectorParser } from '../../logic/selectors/TagProjectSelectorParser';
 import { VersionPolicyProjectSelectorParser } from '../../logic/selectors/VersionPolicyProjectSelectorParser';
+import { JsonFileSelectorParser } from '../../logic/selectors/JsonFileSelectorParser';
 
 import { RushProjectSelector } from '../../api/RushProjectSelector';
 
@@ -43,10 +44,9 @@ export class SelectionParameterSet {
   private readonly _fromVersionPolicy: CommandLineStringListParameter;
   private readonly _toVersionPolicy: CommandLineStringListParameter;
 
-  private readonly _selectByString: CommandLineStringListParameter;
-  private readonly _selectByJsonFile: CommandLineStringListParameter;
-
   private readonly _selectorParserByScope: Map<string, ISelectorParser<RushConfigurationProject>>;
+
+  private readonly _projectSelector: RushProjectSelector;
 
   public constructor(
     rushConfiguration: RushConfiguration,
@@ -56,16 +56,22 @@ export class SelectionParameterSet {
     this._rushConfiguration = rushConfiguration;
     this._gitOptions = gitOptions;
 
+    // New project selection interface
+    this._projectSelector = new RushProjectSelector(rushConfiguration, {
+      gitSelectorParserOptions: this._gitOptions
+    });
+
+    // Classic, directly instantiated selector parsers
     const selectorParsers: Map<string, ISelectorParser<RushConfigurationProject>> = new Map<
       string,
       ISelectorParser<RushConfigurationProject>
     >();
-
     const nameSelectorParser: NamedProjectSelectorParser = new NamedProjectSelectorParser(rushConfiguration);
     selectorParsers.set('name', nameSelectorParser);
     selectorParsers.set('git', new GitChangedProjectSelectorParser(rushConfiguration, gitOptions));
     selectorParsers.set('tag', new TagProjectSelectorParser(rushConfiguration));
     selectorParsers.set('version-policy', new VersionPolicyProjectSelectorParser(rushConfiguration));
+    selectorParsers.set('json', new JsonFileSelectorParser(rushConfiguration, this._projectSelector));
 
     this._selectorParserByScope = selectorParsers;
 
@@ -188,21 +194,6 @@ export class SelectionParameterSet {
         ' belonging to VERSION_POLICY_NAME.' +
         ' For details, refer to the website article "Selecting subsets of projects".'
     });
-
-    this._selectByString = action.defineStringListParameter({
-      parameterLongName: '--select',
-      argumentName: 'EXPRESSION',
-      description:
-        'Select projects using a string selector expression. ' +
-        'This is going to require some pretty good documentation.'
-    });
-    this._selectByJsonFile = action.defineStringListParameter({
-      parameterLongName: '--select-json-file',
-      argumentName: 'EXPRESSION',
-      description:
-        'Select projects using a JSON selector expression read from the specified file. ' +
-        'This is going to require some pretty good documentation too.'
-    });
   }
 
   /**
@@ -229,10 +220,9 @@ export class SelectionParameterSet {
     ];
 
     // Check if any of the selection parameters have a value specified on the command line
-    const isSelectionSpecified: boolean =
-      selectors.some((param: CommandLineStringListParameter) => param.values.length > 0) ||
-      this._selectByString.values.length > 0 ||
-      this._selectByJsonFile.values.length > 0;
+    const isSelectionSpecified: boolean = selectors.some(
+      (param: CommandLineStringListParameter) => param.values.length > 0
+    );
 
     // If no selection parameters are specified, return everything
     if (!isSelectionSpecified) {
@@ -258,20 +248,7 @@ export class SelectionParameterSet {
       })
     );
 
-    // New Selector Expression Parsing Stuff
-    const projectSelector: RushProjectSelector = new RushProjectSelector(this._rushConfiguration, {
-      gitSelectorParserOptions: this._gitOptions
-    });
-    let selectedByExpression: RushConfigurationProject[] = [];
-    for (const value of this._selectByString.values) {
-      selectedByExpression = selectedByExpression.concat(await projectSelector.selectExpressionString(value));
-    }
-    // End New Selector Expression Parsing Stuff
-
     const selection: Set<RushConfigurationProject> = Selection.union(
-      // Selected by selector expressions
-      new Set(selectedByExpression),
-
       // Safe command line options
       Selection.expandAllDependencies(
         Selection.union(

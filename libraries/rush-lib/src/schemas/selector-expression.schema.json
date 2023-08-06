@@ -18,6 +18,8 @@
     },
     "selector": {
       "type": "object",
+      "additionalProperties": false,
+      "requiredProperties": ["scope", "value"],
       "properties": {
         "scope": {
           "type": "string",
@@ -31,6 +33,8 @@
     },
     "filter": {
       "type": "object",
+      "additionalProperties": false,
+      "requiredProperties": ["filter", "arg"],
       "properties": {
         "filter": {
           "type": "string",
@@ -43,6 +47,8 @@
     },
     "operator": {
       "type": "object",
+      "additionalProperties": false,
+      "requiredProperties": ["op", "args"],
       "properties": {
         "op": {
           "type": "string",
